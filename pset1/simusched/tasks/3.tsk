@@ -1,0 +1,5 @@
+# ./simusched tasks/3.tsk 1 1 0 SchedFCFS | python graphsched.py > ../docs/images/3.png && eog ../docs/images/3.png &
+
+TaskBatch 100 10
+TaskBatch 70 5
+TaskBatch 30 3

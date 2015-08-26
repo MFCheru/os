@@ -29,9 +29,26 @@ void TaskConsola(int pid, vector<int> params) {
 
 	for (int i = 0; i < params[0]; ++i) {
 		int t = params[1] + rand() % (params[2] - params[1] + 1);
+		uso_CPU(pid, 1); // syscall usage
 		uso_IO(pid, t);
 	}
 
+}
+
+void TaskBatch(int pid, vector<int> params) {
+
+	srand(1); // set seed
+
+	int total_cpu = params[0];
+	int cant_bloqueos = params[1];
+
+	for (int i = 0; i < total_cpu; ++i) {
+		uso_CPU(pid, 1); // syscall or normal usage
+		if (cant_bloqueos > 0 && rand() % 2 == 0) { // block
+			uso_IO(pid, 1);
+			cant_bloqueos--;
+		}
+	}
 }
 
 void tasks_init(void) {
@@ -42,4 +59,5 @@ void tasks_init(void) {
 	register_task(TaskIO, 2);
 	register_task(TaskAlterno, -1);
 	register_task(TaskConsola, 3);
+	register_task(TaskBatch, 2);
 }
