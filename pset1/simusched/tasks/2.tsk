@@ -1,0 +1,11 @@
+# ./simusched tasks/2.tsk 1 4 0 SchedFCFS | python graphsched.py > ../docs/images/2_1nucleo.png  && eog ../docs/images/2_1nucleo.png &
+# ./simusched tasks/2.tsk 2 4 0 SchedFCFS | python graphsched.py > ../docs/images/2_2nucleos.png && eog ../docs/images/2_2nucleos.png &
+
+# Algoritmo
+TaskCPU 100
+
+# Musica
+TaskConsola 20 2 4
+
+# Internet
+TaskConsola 25 2 4
