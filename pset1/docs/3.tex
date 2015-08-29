@@ -10,9 +10,13 @@ void TaskBatch(int pid, vector<int> params) {
 	int total_cpu = params[0];
 	int cant_bloqueos = params[1];
 
+	bool config[total_cpu] = {false};
+	for (int i = 0; i < cant_bloqueos; i++) config[i] = true;
+	random_shuffle(&config[0], &config[total_cpu-1]);
+
 	for (int i = 0; i < total_cpu; ++i) {
 		uso_CPU(pid, 1); // syscall or normal usage
-		if (cant_bloqueos > 0 && rand() % 2 == 0) { // block
+		if (config[i] == true) { // block
 			uso_IO(pid, 1);
 			cant_bloqueos--;
 		}

@@ -23,7 +23,7 @@ Luego, el loop ejecuta la llamada \texttt{bloqueante} simulada con un request de
 
 Este numero no necesariamente tiene una distribución uniforme perfecta, pero se le parece demasiado dado que genera un valor entre $0$ y \texttt{RAND\_MAX}\footnote{http://www.cplusplus.com/reference/cstdlib/RAND\_MAX} (definido en la std) y luego le aplica la función modulo con un numero chico a un dominio grande. La función devuelve un numero $t \in [0, RAND\_MAX]$. La función modulo luego achica ese dominio a $[0, bmax - bmin]$. Finalmente, al sumarle bmin logramos que $t \in [bmin, bmax]$.
 
-\subsubsection{Diagrama GANTT}
+\subsection{Diagrama GANTT}
 
 El siguiente diagrama fue generado con los siguientes parametros:
 
