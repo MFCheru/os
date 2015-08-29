@@ -16,10 +16,8 @@ class SchedNoMistery : public SchedBase {
 	std::vector<int> quantum_list;
 	std::vector<int> quantum_curr;
 	std::list<int> q;
-	int cycles_left;
-	int not_executed;
-
-	// int next_pid();
+	int cycles_left, not_executed, unblocks_left;
+	int next_pid(void);
 };
 
 #endif

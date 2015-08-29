@@ -1,0 +1,114 @@
+\section{Mistery Scheduler}
+
+A partir del \texttt{.o} de un scheduler, hicimos ingeniería inversa de su comportamiento a partir de la ejecución de varias instancias.
+
+\subsection{Código}
+
+\subsubsection{Class Declaration}
+\begin{lstlisting}[language=C++, breaklines=true]
+class SchedNoMistery : public SchedBase {
+  public:
+    SchedNoMistery(std::vector<int> argn);
+    virtual void load(int pid);
+    virtual void unblock(int pid);
+    virtual int tick(int cpu, const enum Motivo m);
+  private:
+	std::vector<int> quantum_list;
+	std::vector<int> quantum_curr;
+	std::list<int> q;
+	int cycles_left, not_executed, unblocks_left;
+	int next_pid(void);
+};
+\end{lstlisting}
+
+
+\subsubsection{Constructor}
+\begin{lstlisting}[language=C++, breaklines=true]
+SchedNoMistery::SchedNoMistery(vector<int> argn) {
+	// cpu cores, rest of params
+	cycles_left = 1;
+	not_executed = 0;
+
+	quantum_list.push_back(1);
+
+	if (argn.size() > 1) {
+		for (vector<int>::iterator it = ++argn.begin(); it != argn.end(); ++it) {
+			quantum_list.push_back(*it);
+		}
+	}
+}
+\end{lstlisting}
+
+\subsubsection{Load}
+\begin{lstlisting}[language=C++, breaklines=true]
+void SchedNoMistery::load(int pid) {
+	list<int>::iterator it = q.begin();
+	advance(it, not_executed);
+	q.insert(it,1,pid);
+	not_executed++;
+
+	quantum_curr.push_back(0);
+}
+\end{lstlisting}
+
+\pagebreak
+
+\subsubsection{Unblock}
+\begin{lstlisting}[language=C++, breaklines=true]
+void SchedNoMistery::unblock(int pid) {
+	list<int>::iterator it = q.begin();
+	advance(it, unblocks_left);
+	q.insert(it,1,pid);
+	unblocks_left++;
+}
+\end{lstlisting}
+
+\subsubsection{Tick}
+\begin{lstlisting}[language=C++, breaklines=true]
+int SchedNoMistery::tick(int cpu, const enum Motivo m) {
+	if (m == EXIT || m == BLOCK) {
+		// current pid ended, get next
+		if (q.empty()) return IDLE_TASK;
+		else { // get task from list
+			return next_pid();
+		}
+	} else {
+		if (current_pid(cpu) == IDLE_TASK && !q.empty()) {
+			return next_pid();
+		} else {
+			cycles_left--;
+
+			if (current_pid(cpu) != IDLE_TASK && cycles_left == 0) {
+				quantum_curr[current_pid(cpu)] = min(quantum_curr.at(current_pid(cpu))+1,
+												((int)quantum_list.size())-1);
+				if (q.empty()) {
+					cycles_left = quantum_list.at(quantum_curr.at(current_pid(cpu)));
+					not_executed = max(not_executed - 1, 0);
+					return current_pid(cpu);
+				} else {
+					q.push_back(current_pid(cpu));
+					return next_pid();
+				}
+			} else {
+				return current_pid(cpu);
+			}
+		}
+	}
+}
+\end{lstlisting}
+
+\subsubsection{next\_pid}
+\begin{lstlisting}[language=C++, breaklines=true]
+int SchedNoMistery::next_pid() {
+	int pid = q.front(); q.pop_front();
+	if (unblocks_left > 0) {
+		cycles_left = 1;
+		unblocks_left--;
+	} else {
+		cycles_left = quantum_list.at(quantum_curr.at(pid));
+	}
+	not_executed = max(not_executed - 1, 0);
+
+	return pid;
+}
+\end{lstlisting}
