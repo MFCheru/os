@@ -16,7 +16,8 @@ class SchedRR : public SchedBase {
 	private:
 		int quantum;
 		int* cycles;
-		std::queue<int> q;
+		std::vector<std::queue<int>> q;
+		std::vector<int> load; // buscar otra estructura?
 };
 
 #endif
