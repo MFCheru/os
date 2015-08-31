@@ -1,0 +1,14 @@
+# ./simusched tasks/5.tsk 1 1 0 SchedRR 2 | python graphsched.py > ../docs/images/5_quantum2.png && eog ../docs/images/5_quantum2.png &
+# ./simusched tasks/5.tsk 1 1 0 SchedRR 10 | python graphsched.py > ../docs/images/5_quantum10.png && eog ../docs/images/5_quantum10.png &
+# ./simusched tasks/5.tsk 1 1 0 SchedRR 50 | python graphsched.py > ../docs/images/5_quantum50.png && eog ../docs/images/5_quantum50.png &
+
+# ./simusched tasks/5.tsk 1 1 0 SchedRR 2 | python graphsched.py > ../docs/images/6_quantum2.png && eog ../docs/images/5_quantum2.png &
+# ./simusched tasks/5.tsk 1 1 0 SchedRR 10 | python graphsched.py > ../docs/images/6_quantum10.png && eog ../docs/images/5_quantum10.png &
+# ./simusched tasks/5.tsk 1 1 0 SchedRR 50 | python graphsched.py > ../docs/images/6_quantum50.png && eog ../docs/images/5_quantum50.png &
+
+TaskCPU 50
+TaskCPU 50
+TaskCPU 50
+
+TaskConsola 5 3 3
+TaskConsola 5 3 3

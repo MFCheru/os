@@ -1,0 +1,14 @@
+# ./simusched tasks/mistery.tsk 1 0 0 SchedMistery | python graphsched.py > ../docs/images/mist.png && eog ../docs/images/mist.png &
+
+*3 TaskCPU 10
+@4
+*3 TaskCPU 5
+
+
+
+TaskConsola 2 1 4
+TaskConsola 5 1 1
+TaskConsola 10 1 
+*3 TaskCPU 10
+@20:
+TaskCPU 10
