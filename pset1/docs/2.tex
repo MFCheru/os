@@ -5,13 +5,10 @@
 El siguiente diagrama fue generado con los siguientes parametros:
 
 \begin{enumerate}
-	\item lote\_tsk: 1.tsk
+	\item lote\_tsk: 2.tsk
 	\item num\_cores: 1
-	\item switch\_cost: 0
+	\item switch\_cost: 4
 	\item sched\_class: SchedFCFS
-	\item n: 10
-	\item bmin: 1
-	\item bmax: 10
 \end{enumerate}
 
 \begin{figure}[h]
@@ -20,10 +17,19 @@ El siguiente diagrama fue generado con los siguientes parametros:
     \caption{Rolando con 1 núcleo}
 \end{figure}
 
+En la figura 2 se presenta el diagrama de Gantt del \textit{lote2} bajo el algortimo del scheduler FCFS. Este lote simula la situaci\'on de \textit{Rolando}, para el que se requiere ejecutar 3 tareas. Las tres tendr\'an un \textit{release time} nulo, de modo que cada tarea s\'olo deber\'a esperar al costo de cambio de contexto para entrar en estado \textit{runing}. La primera, que es del tipo TaskCPU y con su parametro igual a 100, tras esperar 4 ciclos de reloj (por el \textit{switch\_cost}), como su parametro indica, hace uso del CPU durante 100 ciclos de rejoj, y uno extra por la llamada a \textit{exit()}. Tras finalizar la anterior, y despu\'es de otros 4 ciclos por el cambio de contexto, pasa al estado \textit{runing} la segunda tarea, esta vez de tipo TaskConsola y con el vector \textit{$<$20, 2, 4$>$} como parametro. Esta efectua 20 llamadas bloqueantes, que demoran entre 2 a 4 ciclos, haciendo uso de 20 llamadas consecutivas a \textit{uso\_IO()} que requieren a su vez de 1 ciclo cada una. Por \'ultimo, luego de emplear su \'ultimo ciclo asignado para llamar a \textit{exit()}, y tras demorarse otros 4 por el cambio de contexto, pasa al estado \textit{runing} la \'ultima tarea del lote. Nuevamente es del tipo TaskConsola, esta vez con el vector \textit{$<$25, 2, 4$>$} como parametro. De igual manera que en la tarea anterior se hace uso de \textit{uso\_IO()} para efectuar las 25 llamadas bloqueantes, y de \textit{exit()} en el \'ultimo ciclo.
+
+\begin{enumerate}
+	\item lote\_tsk: 2.tsk
+	\item num\_cores: 2
+	\item switch\_cost: 4
+	\item sched\_class: SchedFCFS
+\end{enumerate}
+
 \begin{figure}[h]
     \includegraphics[width=\linewidth]{images/2_2nucleos.png}
     \label{fig:Task Consola}
     \caption{Rolando con 2 núcleos}
 \end{figure}
 
-\textbf{TODO: Explicar bien el diagrama!}
+En la Figura 3 se observa el diagrama de Gantt del mismo lote de tareas y scheduler de antes, pero esta vez bajo una CPU que cuenta con dos nucleos. Al igual que el caso anterior, el \textit{switch\_cost}) es de 4 ciclos, por lo que se demora esta cantidad de tiempo empezar a correr la primera tarea. Que a diferencia del caso anterior (en el que se contaba con un s\'olo nucleo) tras ese tiempo, pasan al estado \textit{runing} las primeras 2 tareas (una en cada nucleo). Trabajando como se explico en el caso anterior, luego de terminar la tarea asignada al \textit{label} 1 del grafico (la TaskConsola 20 2 4), pasa al estado \textit{runing} la \'ultima tarea restante  

@@ -32,9 +32,6 @@ El siguiente diagrama fue generado con los siguientes parametros:
 	\item num\_cores: 1
 	\item switch\_cost: 0
 	\item sched\_class: SchedFCFS
-	\item n: 10
-	\item bmin: 1
-	\item bmax: 10
 \end{enumerate}
 
 \begin{figure}[h]
@@ -43,4 +40,4 @@ El siguiente diagrama fue generado con los siguientes parametros:
     \caption{Task Consola}
 \end{figure}
 
-\textbf{TODO: Explicar bien el diagrama!}
+La Figura 1 nos muestra el diagrama de Gantt asociado a la gesti\'on que desempeña el Scheduler FCFS bajo la ejecuci\'on del lote \textit{lote1} de tareas. Este lote s\'olo contiene una \'unica tarea de tipo TaskConsola con un \textit{release time} nulo, y un vector \textit{$<$10,1,10$>$} como prametro. En consucuencia, y como a su vez el \textit{switch cost} tambi\'en es nulo, se ejecuta inmediatamente dicha tarea sin tener que mantenerse esperarando en estado \textit{ready}. Como el FCFS, cada vez que una tarea entra en estado \textit{runing}, no la interrumpe hasta que \'esta finalice (y de cualquier forma es la \'unica tarea corriendo), la actual puede concluir sin ningun tipo de desalojo de por medio. Con lo cual pasar\'a a efectuar sus 10 llamadas bloqueantes, de un rango de entre 1 y 10 ciclos de reloj, consecutivamente y s\'olo volviendo al estado \textit{runing} durante un ciclo entre cada una para llamar a \textit{uso\_IO()}, y finalmente una vez mas para llamar a \textit{exit()} en el \'ultimo ciclo.
