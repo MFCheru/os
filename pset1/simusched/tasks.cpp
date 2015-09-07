@@ -43,7 +43,8 @@ void TaskBatch(int pid, vector<int> params) {
 	int total_cpu = params[0];
 	int cant_bloqueos = params[1];
 
-	bool config[total_cpu] = {false};
+	bool config[total_cpu];
+	fill_n(config, total_cpu, false);
 	for (int i = 0; i < cant_bloqueos; i++) config[i] = true;
 	random_shuffle(&config[0], &config[total_cpu-1]);
 
