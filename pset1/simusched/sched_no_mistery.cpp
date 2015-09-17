@@ -17,29 +17,24 @@ SchedNoMistery::SchedNoMistery(vector<int> argn) {
 	tasks = 0;
 
 	quantum_list.push_back(1);
-	q.push_back(deque<int>());
+	q.push_back(queue<int>());
 
 	if (argn.size() > 1) {
 		for (vector<int>::iterator it = ++argn.begin(); it != argn.end(); ++it) {
 			quantum_list.push_back(*it);
-			q.push_back(deque<int>());
+			q.push_back(queue<int>());
 		}
 	}
 }
 
 void SchedNoMistery::load(int pid) {
 
-	q.at(0).push_back(pid);
+	q.at(0).push(pid);
 	tasks++;
 }
 
 void SchedNoMistery::unblock(int pid) {
-	// list<int>::iterator it = q.begin();
-	// advance(it, unblocks_left);
-	// q.insert(it,1,pid);
-	// unblocks_left++;
-	q.at(max(0,blockedQueue[pid]-1)).push_back(pid);
-	// q.at(0).insert(blockedQueue.size());
+	q.at(max(0,blockedQueue[pid]-1)).push(pid);
 	blockedQueue.erase(pid);
 	tasks++;
 }
@@ -49,7 +44,7 @@ int SchedNoMistery::tick(int cpu, const enum Motivo m) {
 		if (m == BLOCK) {
 			blockedQueue[current_pid(cpu)] = current_queue;
 		}
-
+		
 		tasks--;
 		// current pid ended, get next
 		if (tasks == 0) return IDLE_TASK;
@@ -68,7 +63,7 @@ int SchedNoMistery::tick(int cpu, const enum Motivo m) {
 					cycles_left = quantum_list.at(current_queue);
 					return current_pid(cpu);
 				} else {
-					q.at(current_queue).push_back(current_pid(cpu));
+					q.at(current_queue).push(current_pid(cpu));
 					return next_pid();
 				}
 			}
@@ -80,12 +75,12 @@ int SchedNoMistery::tick(int cpu, const enum Motivo m) {
 /* Requires some queue not to be empty */
 int SchedNoMistery::next_pid() {
 	int selectQueue = 0;
-	for (vector<deque<int> >::iterator it = q.begin(); it != q.end(); ++it) {
+	for (vector<queue<int> >::iterator it = q.begin(); it != q.end(); ++it) {
 		if ((*it).size() > 0) break;
 		selectQueue++;
 	}
 	int pid = q.at(selectQueue).front();
-	q.at(selectQueue).pop_front();
+	q.at(selectQueue).pop();
 	current_queue = selectQueue;
 	cycles_left = quantum_list.at(selectQueue);
 	return pid;

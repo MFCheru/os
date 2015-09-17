@@ -14,7 +14,7 @@ class SchedNoMistery : public SchedBase {
     virtual int tick(int cpu, const enum Motivo m);
   private:
 	std::vector<int> quantum_list;
-	std::vector<std::deque<int> > q;
+	std::vector<std::queue<int> > q;
   std::map<int, int> blockedQueue;
 	int cycles_left, current_queue, tasks;
 	int next_pid(void);
