@@ -2,8 +2,8 @@
 #define __SCHED_NOMIS__
 
 #include <vector>
-#include <queue>
-#include <list>
+#include <deque>
+#include <map>
 #include "basesched.h"
 
 class SchedNoMistery : public SchedBase {
@@ -14,9 +14,9 @@ class SchedNoMistery : public SchedBase {
     virtual int tick(int cpu, const enum Motivo m);
   private:
 	std::vector<int> quantum_list;
-	std::vector<int> quantum_curr;
-	std::list<int> q;
-	int cycles_left, not_executed, unblocks_left;
+	std::vector<std::deque<int> > q;
+  std::map<int, int> blockedQueue;
+	int cycles_left, current_queue, tasks;
 	int next_pid(void);
 };
 
