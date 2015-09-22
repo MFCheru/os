@@ -30,7 +30,6 @@ void TaskConsola(int pid, vector<int> params) {
 
 	for (int i = 0; i < params[0]; ++i) {
 		int t = params[1] + rand() % (params[2] - params[1] + 1);
-		uso_CPU(pid, 1); // syscall usage
 		uso_IO(pid, t);
 	}
 
@@ -49,10 +48,10 @@ void TaskBatch(int pid, vector<int> params) {
 	random_shuffle(&config[0], &config[total_cpu-1]);
 
 	for (int i = 0; i < total_cpu; ++i) {
-		uso_CPU(pid, 1); // syscall or normal usage
 		if (config[i] == true) { // block
 			uso_IO(pid, 1);
-			cant_bloqueos--;
+		} else {
+			uso_CPU(pid, 1);
 		}
 	}
 }
