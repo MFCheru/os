@@ -32,6 +32,8 @@ El resultado fue el siguiente:
 
 Aqui podemos apreciar que el scheduler tiene una cierta similitud con $Round Robin$, donde el quantum varia de manera rotativa segun los parametros pasados al scheduler. La primera vez que el proceso ejecuta lo hace por un ciclo y es desalojado, luego el quantum es determinado por los parametros recibidos hasta llegar al ultimo, a partir de ese momento el quantum es siempre el mismo hasta que el proceso termina de ejecutarse.
 
+\pagebreak
+
 Con esto en mente, procedimos a ver como operaba el scheduler con la incorporacion de tareas. Para esto se ejecutaron las siguientes tareas:
 
 \begin{itemize}
@@ -43,8 +45,24 @@ Con esto en mente, procedimos a ver como operaba el scheduler con la incorporaci
 \begin{figure}[h]
     \includegraphics[width=\linewidth]{images/mist2.png}
     \label{fig:Task Consola}
-    \caption{Primera prueba}
+    \caption{Segunda prueba}
 \end{figure}
+
+En este caso, al incorporar la tarea podemos observar que su quantum asignado es sumamente grande. Luego de mucho análisis observamos que en realidad estaba sumando los quantums que habíamos pasado por parámetro. Aquí es donde nos dimos cuenta que probablemente el Scheduler tenia múltiples colas con diferentes prioridades dadas por los parámetros de entrada. Siempre se ejecuta la tarea de máxima prioridad. La tarea 2 en un inicio se ejecuta por un quantum grande dado que se le suma el quantum de las colas de prioridad 1, 5, 6 y 7.
+
+\hspace{2px}
+
+Finalmente, buscamos ver como funcionaba el scheduler al incorporarse una tarea bloqueante.
+
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{images/mist2.png}
+    \label{fig:Task Consola}
+    \caption{Tercera prueba \textbf{PONER LA POSTA}}
+\end{figure}
+
+Notamos que al entrar una tarea bloqueante seguía ejecutando la próxima de la cola y continuaba el Round Robin. Sin embargo, también notamos que al reincorporarse la tarea la misma tenia el quantum correspondiente a una cola con exactamente un nivel mayor de prioridad. De esta manera inferimos que al momento de reincorporar una tarea el scheduler si puede la asigna a una cola con un nivel mas de prioridad. A su vez, esto significa que en muchos casos esta sera la primera en ejecutarse al reincorporarse, sin tener que esperar al resto de las tareas que ya estaban en ejecucion.
+
+\pagebreak
 
 \subsection{Código}
 
@@ -152,7 +170,12 @@ int SchedNoMistery::next_pid() {
 	cycles_left = quantum_list.at(selectQueue);
 	return pid;
 }
+
 \end{lstlisting}
+
+\pagebreak
+
+\textbf{BORRAR LO SIGUIENTE?}
 
 \subsection{Diagramas y analisis del scheduler}
 Para poder analizar el comportamiento del scheduler, decidimos armar el siguiente lote de tareas:
@@ -170,7 +193,7 @@ TaskConsola 10 1 2
 TaskCPU 10
 \end{lstlisting}
 
-De este grafico podemos inferir lo siguiente:
+De este gráfico podemos inferir lo siguiente:
 
 \begin{itemize}
 	\item El scheduler es un round robin con algunas particularidades
