@@ -15,61 +15,83 @@ class SchedRR : public SchedBase {
 		virtual int tick(int cpu, const enum Motivo m);
 
 	private:
-		int quantum;
+		int* quantum;
 		int* cycles;
 		std::queue<int> q;
 };
 \end{lstlisting}
 
-Por un lado, el \texttt{quantum}, que nos dice por cuantos ciclos de clock nuestras tareas se van a ejecutar. Por otro lado, tenemos un puntero de enteros llamado \texttt{cycles}, que lo que hace es mantener la cuenta de cuantos ciclos le quedan a cada tarea en ejecución por CPU antes de llegar al quantum. Finalmente, tenemos una cola de tareas \texttt{q} compartida entre CPUs.
+Por un lado, el puntero de enteros llamado \texttt{quantum} nos dice por cuantos ciclos de clock nuestras tareas se van a ejecutar por CPU. Por otro lado, tenemos un puntero de enteros llamado \texttt{cycles}, que lo que hace es mantener la cuenta de cuantos ciclos le quedan a cada tarea en ejecución por CPU antes de llegar al quantum. Finalmente, tenemos una cola de tareas \texttt{q} compartida entre CPUs.
 
-\subsubsection{Constructor}
+\subsubsection{Constructor y Destructor}
 \begin{lstlisting}[language=C++, breaklines=true]
 SchedRR::SchedRR(vector<int> argn) {
 	// Round robin recibe la cantidad de cores y sus cpu_quantum por parametro
+	quantum = new int[argn.size()-1];
 
-	quantum = argn[1];
+	for (int i = 1; i < (int) argn.size(); i++) {
+		quantum[i-1] = argn[i];
+	}
+
 	cycles = new int[argn[0]];
-	fill_n(cycles, argn[0], quantum); 
 }
 \end{lstlisting}
 
-\subsubsection{Destructor}
+Aqui tenemos en \texttt{quantum} el arreglo del quantum por CPU, mientras que en \texttt{cycles} tenemos un arreglo que mantiene la cantidad de ciclos restantes del quantum de cada CPU.
+
 \begin{lstlisting}[language=C++, breaklines=true]
 SchedRR::~SchedRR() {
 	delete[] cycles;
+	delete[] quantum;
 }
 \end{lstlisting}
 
-\pagebreak
+El destructor se encarga de liberar la memoria alocada por los dos arreglos.
+
+\subsection{Load y Unblock}
+
+\begin{lstlisting}[language=C++, breaklines=true]
+void SchedRR::load(int pid) {
+	q.push(pid);
+}
+
+void SchedRR::unblock(int pid) {
+	q.push(pid);
+}
+\end{lstlisting}
+
+Estas funciones se encargan de cargar tareas y de volverlas a cargar cuando se desbloquean. En este caso la implementacion es simple, ya que la migracion de procesos entre CPUs nos permite tener una unica cola, con lo cual alcanza con agregarlas a la misma para que entren en la rotacion de tareas.
 
 \subsubsection{Tick}
+
+Aqui tenemos el ciclo de ejecucion del $tick$ del scheduler, el mismo se encarga de manejar el desalojo de tareas:
+
 \begin{lstlisting}[language=C++, breaklines=true]
 int SchedRR::tick(int cpu, const enum Motivo m) {
-	if (m == EXIT) {
+	if (m == EXIT || m == BLOCK) {
 		// Si el pid actual termino, sigue el proximo.
 		if (q.empty()) return IDLE_TASK;
 		else {
 			int sig = q.front(); q.pop();
-			cycles[cpu] = quantum;
+			cycles[cpu] = quantum[cpu];
 			return sig;
 		}
 	} else {
 		if (current_pid(cpu) == IDLE_TASK && !q.empty()) {
 			int sig = q.front(); q.pop();
-			cycles[cpu] = quantum;
+			cycles[cpu] = quantum[cpu];
 			return sig;
 		} else {
 			cycles[cpu]--;
 
 			if (cycles[cpu] == 0) {
 				if (q.empty()) {
-					cycles[cpu] = quantum;
+					cycles[cpu] = quantum[cpu];
 					return current_pid(cpu);
 				} else {
 					int sig = q.front(); q.pop();
 					q.push(current_pid(cpu)); // re-add to queue
-					cycles[cpu] = quantum;
+					cycles[cpu] = quantum[cpu];
 					return sig;
 				}
 			} else {
@@ -80,6 +102,35 @@ int SchedRR::tick(int cpu, const enum Motivo m) {
 }
 \end{lstlisting}
 
+Como podemos apreciar, primero se considera si la tarea actual ejecutandose en la CPU termino u ocurrio un bloqueo, en ambos casos se la desaloja y se la cambia por la siguiente tarea en la cola, resetando el quantum en el proceso. Si el procesador se encuantra ejecutando la tarea IDLE y hay tareas esperando a ser ejecutadas, se procede a ejecutar la primera que este en la cola y se resetea el quantum para la CPU. Si no se presentan ninguno de los dos casos anteriores, el scheduler chequea el quantum actual, si aun no termino se mantiene la tarea actual y se concluye el $tick$. En el caso que haya terminado el quantum se chequea la cola de tareas, si no hay tareas en espera se resetea el quantum, en el caso contrario se efectua el cambio de tarea con la primer tarea de la cola tambien reseteando el quantum.
 
+Para verificar la correcta implementacion de los mecanismos de $Round Robin$, tenemos la siguiente configuracion del scheduler:
+
+\begin{enumerate}
+	\item lote\_tsk: 2.tsk
+	\item num\_cores: 2
+	\item switch\_cost: 1
+	\item sched\_class: SchedRR
+	\item params: 5 10
+\end{enumerate}
+
+Esta configuracion fue ejecutada con las siguientes tareas:
+
+\begin{itemize}
+	\item Tarea 0: 40 ciclos de CPU, 0 llamadas bloqueantes
+	\item Tarea 1: 40 ciclos de CPU, 0 llamadas bloqueantes
+	\item Tarea 2: 40 ciclos de CPU, 0 llamadas bloqueantes
+	\item Tarea 3: 20 ciclos de CPU, 5 llamadas bloqueates, incorporada en el momento 10
+\end{itemize}
+
+El resultado obtenido fue el siguiente:
+
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{images/4.png}
+    \label{fig:Task Consola}
+    \caption{Task Batch}
+\end{figure}
+
+Como podemos apreciar, cada una de las CPU tiene su propio quantum. Las tareas se ejecutan durante el quantum, luego son desalojadas y se procede a la siguiente tarea en la cola. Por ultimo, podemos ver que el comportamiento en los bloqueos es adecuado, cuando una tarea se bloquea esta es desalojada y se procede a buscar la proxima tarea.
 
 
