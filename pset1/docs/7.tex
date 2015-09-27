@@ -50,7 +50,7 @@ Con esto en mente, procedimos a ver como operaba el scheduler con la incorporaci
 
 En este caso, al incorporar la tarea podemos observar que su quantum asignado es sumamente grande. Luego de mucho análisis observamos que en realidad estaba sumando los quantums que habíamos pasado por parámetro. Aquí es donde nos dimos cuenta que probablemente el Scheduler tenia múltiples colas con diferentes prioridades dadas por los parámetros de entrada. Siempre se ejecuta la tarea de máxima prioridad. La tarea 2 en un inicio se ejecuta por un quantum grande dado que se le suma el quantum de las colas de prioridad 1, 5, 6 y 7.
 
-\hspace{2px}
+\hspace{1px}
 
 Finalmente, buscamos ver como funcionaba el scheduler al incorporarse una tarea bloqueante.
 
@@ -60,7 +60,11 @@ Finalmente, buscamos ver como funcionaba el scheduler al incorporarse una tarea 
     \caption{Tercera prueba \textbf{PONER LA POSTA}}
 \end{figure}
 
-Notamos que al entrar una tarea bloqueante seguía ejecutando la próxima de la cola y continuaba el Round Robin. Sin embargo, también notamos que al reincorporarse la tarea la misma tenia el quantum correspondiente a una cola con exactamente un nivel mayor de prioridad. De esta manera inferimos que al momento de reincorporar una tarea el scheduler si puede la asigna a una cola con un nivel mas de prioridad. A su vez, esto significa que en muchos casos esta sera la primera en ejecutarse al reincorporarse, sin tener que esperar al resto de las tareas que ya estaban en ejecucion.
+Notamos que al entrar una tarea bloqueante seguía ejecutando la próxima de la cola y continuaba el Round Robin. Sin embargo, también notamos que al reincorporarse la tarea la misma tenia el quantum correspondiente a una cola con exactamente un nivel mayor de prioridad. De esta manera inferimos que al momento de reincorporar una tarea el scheduler si puede la asigna a una cola con un nivel mas de prioridad. A su vez, esto significa que en muchos casos esta sera la primera en ejecutarse al reincorporarse, sin tener que esperar al resto de las tareas que ya estaban en ejecución.
+
+\hspace{1px}
+
+Para concluir, el Mystery Scheduler es un scheduler con Round Robin y múltiples colas de prioridad. A cada cola de prioridad se le asigna un quantum único dado por parámetro. Existe una cola implícita, que es la de mayor prioridad, con un quantum de 1. Cada cola adicional que se agrega tiene el quantum pasado por parámetro pero una prioridad menor. El scheduler siempre busca nuevas tareas en las colas de mayor prioridad. Si no encuentra una tarea en dicha cola, pasa a la siguiente.  Al bloquearse una tarea, la misma se remueve del scheduler y luego se reincorpora agregándose a una cola de tareas con un nivel de prioridad mayor. Tener una prioridad mayor no necesariamente implica tener un quantum mayor asignado, solo que se la ejecutara primero.
 
 \pagebreak
 
