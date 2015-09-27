@@ -45,7 +45,7 @@ ejercicio3:
 ejercicio4:
 	make
 	mkdir -p ejercicio4
-	./simusched tasks/4.tsk 2 1 0 SchedRR 5 10 | python graphsched.py > ejercicio4/4.png && eog ejercicio4/4.png &
+	./simusched tasks/4.tsk 2 0 0 SchedRR 5 10 | python graphsched.py > ejercicio4/4.png && eog ejercicio4/4.png &
 
 ejercicio5:
 	make
@@ -75,7 +75,6 @@ ejercicio7:
 ejercicio8:
 	make
 	mkdir -p ejercicio8
-	./simusched tasks/8.tsk 2 2 0 SchedRR2 2 4 | python graphsched.py > ejercicio8/8_quantum2.png && eog ejercicio8/8_quantum2.png &
-	./simusched tasks/8.tsk 2 2 0 SchedRR2 10 20 | python graphsched.py > ejercicio8/8_quantum10.png && eog ejercicio8/8_quantum10.png &
-	./simusched tasks/8.tsk 2 2 0 SchedRR2 50 100 | python graphsched.py > ejercicio8/8_quantum50.png && eog ejercicio8/8_quantum50.png &
+	./simusched tasks/8.tsk 2 2 0 SchedRR2 20 40 | python graphsched.py > ejercicio8/8_quantumRR2.png && eog ejercicio8/8_quantumRR2.png &
+	./simusched tasks/8.tsk 2 2 0 SchedRR 20 40 | python graphsched.py > ejercicio8/8_quantumRR.png && eog ejercicio8/8_quantumRR.png &
 
