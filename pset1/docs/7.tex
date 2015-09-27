@@ -2,6 +2,50 @@
 
 A partir del \texttt{.o} de un scheduler, hicimos ingeniería inversa de su comportamiento a partir de la ejecución de varias instancias.
 
+\subsection{Analisis}
+
+Para tener una idea de lo que hace el scheduler probamos con los siguientes parametros:
+
+\begin{enumerate}
+	\item lote\_tsk: 2.tsk
+	\item num\_cores: 1
+	\item switch\_cost: 0
+	\item sched\_class: SchedFCFS
+	\item params: 5 6 7 8 9 10
+\end{enumerate}
+
+Primero ejecutamos las siguientes tareas
+
+\begin{itemize}
+	\item Tarea 0: 90 ciclos de CPU, 0 llamadas bloqueantes
+	\item Tarea 1: 90 ciclos de CPU, 0 llamadas bloqueantes
+	\item Tarea 2: 90 ciclos de CPU, 0 llamadas bloqueantes
+\end{itemize}
+
+El resultado fue el siguiente:
+
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{images/mist.png}
+    \label{fig:Task Consola}
+    \caption{Primera prueba}
+\end{figure}
+
+Aqui podemos apreciar que el scheduler tiene una cierta similitud con $Round Robin$, donde el quantum varia de manera rotativa segun los parametros pasados al scheduler. La primera vez que el proceso ejecuta lo hace por un ciclo y es desalojado, luego el quantum es determinado por los parametros recibidos hasta llegar al ultimo, a partir de ese momento el quantum es siempre el mismo hasta que el proceso termina de ejecutarse.
+
+Con esto en mente, procedimos a ver como operaba el scheduler con la incorporacion de tareas. Para esto se ejecutaron las siguientes tareas:
+
+\begin{itemize}
+	\item Tarea 0: 90 ciclos de CPU, 2 llamadas bloqueantes, incorporada en el momento 0
+	\item Tarea 1: 90 ciclos de CPU, 4 llamadas bloqueantes, incorporada en el momento 20
+	\item Tarea 2: 90 ciclos de CPU, 6 llamadas bloqueantes, incorporada en el momento 40
+\end{itemize}
+
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{images/mist2.png}
+    \label{fig:Task Consola}
+    \caption{Primera prueba}
+\end{figure}
+
 \subsection{Código}
 
 \subsubsection{Class Declaration}
@@ -14,9 +58,9 @@ class SchedNoMistery : public SchedBase {
     virtual int tick(int cpu, const enum Motivo m);
   private:
 	std::vector<int> quantum_list;
-	std::vector<int> quantum_curr;
-	std::list<int> q;
-	int cycles_left, not_executed, unblocks_left;
+	std::vector<std::queue<int> > q;
+  std::map<int, int> blockedQueue;
+	int cycles_left, current_queue, tasks;
 	int next_pid(void);
 };
 \end{lstlisting}
@@ -27,88 +71,114 @@ class SchedNoMistery : public SchedBase {
 SchedNoMistery::SchedNoMistery(vector<int> argn) {
 	// cpu cores, rest of params
 	cycles_left = 1;
-	not_executed = 0;
+	current_queue = 0;
+	tasks = 0;
 
 	quantum_list.push_back(1);
+	q.push_back(queue<int>());
 
 	if (argn.size() > 1) {
 		for (vector<int>::iterator it = ++argn.begin(); it != argn.end(); ++it) {
 			quantum_list.push_back(*it);
+			q.push_back(queue<int>());
 		}
 	}
 }
 \end{lstlisting}
 
-\subsubsection{Load}
+
+\subsubsection{Load y Unblock}
 \begin{lstlisting}[language=C++, breaklines=true]
 void SchedNoMistery::load(int pid) {
-	list<int>::iterator it = q.begin();
-	advance(it, not_executed);
-	q.insert(it,1,pid);
-	not_executed++;
-
-	quantum_curr.push_back(0);
+	q.at(0).push(pid);
+	tasks++;
 }
 \end{lstlisting}
 
-\pagebreak
-
-\subsubsection{Unblock}
 \begin{lstlisting}[language=C++, breaklines=true]
 void SchedNoMistery::unblock(int pid) {
-	list<int>::iterator it = q.begin();
-	advance(it, unblocks_left);
-	q.insert(it,1,pid);
-	unblocks_left++;
+	q.at(max(0,blockedQueue[pid]-1)).push(pid);
+	blockedQueue.erase(pid);
+	tasks++;
 }
 \end{lstlisting}
+
 
 \subsubsection{Tick}
 \begin{lstlisting}[language=C++, breaklines=true]
 int SchedNoMistery::tick(int cpu, const enum Motivo m) {
 	if (m == EXIT || m == BLOCK) {
+		if (m == BLOCK) {
+			blockedQueue[current_pid(cpu)] = current_queue;
+		}
+		
+		tasks--;
 		// current pid ended, get next
-		if (q.empty()) return IDLE_TASK;
+		if (tasks == 0) return IDLE_TASK;
 		else { // get task from list
 			return next_pid();
 		}
 	} else {
-		if (current_pid(cpu) == IDLE_TASK && !q.empty()) {
+		if (current_pid(cpu) == IDLE_TASK && tasks > 0) {
 			return next_pid();
 		} else {
 			cycles_left--;
-
 			if (current_pid(cpu) != IDLE_TASK && cycles_left == 0) {
-				quantum_curr[current_pid(cpu)] = min(quantum_curr.at(current_pid(cpu))+1,
-												((int)quantum_list.size())-1);
-				if (q.empty()) {
-					cycles_left = quantum_list.at(quantum_curr.at(current_pid(cpu)));
-					not_executed = max(not_executed - 1, 0);
+
+				current_queue = min(current_queue + 1, ((int) q.size()) - 1);
+				if (tasks == 0) {
+					cycles_left = quantum_list.at(current_queue);
 					return current_pid(cpu);
 				} else {
-					q.push_back(current_pid(cpu));
+					q.at(current_queue).push(current_pid(cpu));
 					return next_pid();
 				}
-			} else {
-				return current_pid(cpu);
 			}
+			return current_pid(cpu);
 		}
 	}
 }
-\end{lstlisting}
 
-\subsubsection{next\_pid}
-\begin{lstlisting}[language=C++, breaklines=true]
+/* Requires some queue not to be empty */
 int SchedNoMistery::next_pid() {
-	int pid = q.front(); q.pop_front();
-	if (unblocks_left > 0) {
-		cycles_left = 1;
-		unblocks_left--;
-	} else {
-		cycles_left = quantum_list.at(quantum_curr.at(pid));
+	int selectQueue = 0;
+	for (vector<queue<int> >::iterator it = q.begin(); it != q.end(); ++it) {
+		if ((*it).size() > 0) break;
+		selectQueue++;
 	}
-	not_executed = max(not_executed - 1, 0);
-
+	int pid = q.at(selectQueue).front();
+	q.at(selectQueue).pop();
+	current_queue = selectQueue;
+	cycles_left = quantum_list.at(selectQueue);
 	return pid;
 }
 \end{lstlisting}
+
+\subsection{Diagramas y analisis del scheduler}
+Para poder analizar el comportamiento del scheduler, decidimos armar el siguiente lote de tareas:
+
+\begin{lstlisting}
+	*3 TaskCPU 10
+@4
+*3 TaskCPU 5
+
+TaskConsola 2 1 4
+TaskConsola 5 1 1
+TaskConsola 10 1 2
+*3 TaskCPU 10
+@20:
+TaskCPU 10
+\end{lstlisting}
+
+De este grafico podemos inferir lo siguiente:
+
+\begin{itemize}
+	\item El scheduler es un round robin con algunas particularidades
+	\item Al incoporarse una nueva tarea, se la coloca en el tope de la cola del scheduler.
+\end{itemize}
+
+Este ultimo punto es importante, si dos tareas se incoporan durante la ejecucion de otra tarea, primero concluye el quantum de la tarea actual y se procede a cambiar la tarea con la primera que llego. Es por esta razon que elegimos implementar el scheduler sobre una lista, ya que nos permite agregar los elementos en las posiciones que precisamos.
+
+Otra cosa que determinamos mediante experimentacion, es que el scheduler toma una cantidad arbitraria de parametros. Despues de varias pruebas, pudimos determinar el comportamiento del scheduler respecto a los parametros. Si tomamos los parametros \texttt{5 4 3 2 1}, todas las tareas van a ejecutarse por primera vez con un quantum de un ciclo (esto es independiente de los parametros). Posteriormente el scheduler toma los valores del quantum a partir de los parametros del scheduler de forma ordenada y ciclica, es decir, el quantum de una tarea seria \texttt{1}, \texttt{5}, \texttt{4}, \texttt{3} ,\texttt{2}, \texttt{1}, \texttt{5}, \texttt{4} y asi sucesivamente hasta que concluye la ejecucion de la tarea.
+
+Por ultimo, esta el analisis como responde el scheduler ante las llamadas bloqueantes. Si una tarea tiene una llamada bloqueante se procede a desalojarla hasta que la misma se resuelve, una vez que se resuelve se procede a agregarla nuevamente a la lista con un quantum de un ciclo. Esto ocurre independientemente de los parametros que recibe el scheduler.
