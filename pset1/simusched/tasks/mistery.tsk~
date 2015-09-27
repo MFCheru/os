@@ -1,5 +1,5 @@
 # ./simusched tasks/mistery.tsk 1 0 0 SchedMistery | python graphsched.py > ../docs/images/mist.png && eog ../docs/images/mist.png &
 
-TaskCPU 90
-TaskCPU 90
-TaskCPU 90
+TaskCPU 88
+TaskCPU 88
+TaskCPU 88

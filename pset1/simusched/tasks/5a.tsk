@@ -1,0 +1,9 @@
+# ./simusched tasks/5a.tsk 1 1 0 SchedRR 2 | python graphsched.py > ../docs/images/5a_quantum2.png && eog ../docs/images/5a_quantum2.png &
+# ./simusched tasks/5a.tsk 1 1 0 SchedRR 10 | python graphsched.py > ../docs/images/5a_quantum10.png && eog ../docs/images/5a_quantum10.png &
+# ./simusched tasks/5a.tsk 1 1 0 SchedRR 50 | python graphsched.py > ../docs/images/5a_quantum50.png && eog ../docs/images/5a_quantum50.png &
+
+TaskCPU 20
+TaskCPU 20
+TaskCPU 20
+TaskBatch 20 5
+TaskConsola 3 10 10
