@@ -14,7 +14,7 @@ class SchedRR : public SchedBase {
 		virtual int tick(int cpu, const enum Motivo m);
 
 	private:
-		int quantum;
+		int* quantum;
 		int* cycles;
 		std::queue<int> q;
 };

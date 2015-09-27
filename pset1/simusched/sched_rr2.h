@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <queue>
+#include <map>
 #include "basesched.h"
 
 class SchedRR2 : public SchedBase {
@@ -13,10 +14,11 @@ class SchedRR2 : public SchedBase {
 		virtual void unblock(int pid);
 		virtual int tick(int cpu, const enum Motivo m);
 	private:
-		int quantum;
+		int* quantum;
 		int* cycles;
 		std::vector<std::queue<int> > q;
 		std::vector<int> totalLoad; // buscar otra estructura?
+		std::map<int,int> CPUBlockedTask;
 
 		int getCPU();
 };
