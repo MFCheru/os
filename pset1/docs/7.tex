@@ -37,9 +37,9 @@ Aqui podemos apreciar que el scheduler tiene una cierta similitud con $Round Rob
 Con esto en mente, procedimos a ver como operaba el scheduler con la incorporacion de tareas. Para esto se ejecutaron las siguientes tareas:
 
 \begin{itemize}
-	\item Tarea 0: 90 ciclos de CPU, 2 llamadas bloqueantes, incorporada en el momento 0
-	\item Tarea 1: 90 ciclos de CPU, 4 llamadas bloqueantes, incorporada en el momento 20
-	\item Tarea 2: 90 ciclos de CPU, 6 llamadas bloqueantes, incorporada en el momento 40
+	\item Tarea 0: 90 ciclos de CPU, 0 llamadas bloqueantes, incorporada en el momento 0
+	\item Tarea 1: 90 ciclos de CPU, 0 llamadas bloqueantes, incorporada en el momento 0
+	\item Tarea 2: 90 ciclos de CPU, 0 llamadas bloqueantes, incorporada en el momento 40
 \end{itemize}
 
 \begin{figure}[h]
@@ -52,21 +52,22 @@ En este caso, al incorporar la tarea podemos observar que su quantum asignado es
 
 \hspace{1px}
 
-Finalmente, buscamos ver como funcionaba el scheduler al incorporarse una tarea bloqueante.
+Finalmente, buscamos ver como funcionaba el scheduler al incorporarse una tarea bloqueante. Utilizamos el siguiente lote de tareas:
+
+\begin{itemize}
+	\item Tarea 0: 50 ciclos de CPU, 0 llamadas bloqueantes, incorporada en el momento 0
+	\item Tarea 1: 40 ciclos de CPU, 10 llamadas bloqueantes, incorporada en el momento 0
+	\item Tarea 2: 50 ciclos de CPU, 0 llamadas bloqueantes, incorporada en el momento 25
+	\item Tarea 3: 40 ciclos de CPU, 10 llamadas bloqueantes, incorporada en el momento 25
+\end{itemize}
 
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{images/mist2.png}
+    \includegraphics[width=\linewidth]{images/mist3.png}
     \label{fig:Task Consola}
-    \caption{Tercera prueba \textbf{PONER LA POSTA}}
+    \caption{Tercera prueba}
 \end{figure}
 
 Notamos que al entrar una tarea bloqueante seguía ejecutando la próxima de la cola y continuaba el Round Robin. Sin embargo, también notamos que al reincorporarse la tarea la misma tenia el quantum correspondiente a una cola con exactamente un nivel mayor de prioridad. De esta manera inferimos que al momento de reincorporar una tarea el scheduler si puede la asigna a una cola con un nivel mas de prioridad. A su vez, esto significa que en muchos casos esta sera la primera en ejecutarse al reincorporarse, sin tener que esperar al resto de las tareas que ya estaban en ejecución.
-
-\hspace{1px}
-
-Para concluir, el Mystery Scheduler es un scheduler con Round Robin y múltiples colas de prioridad. A cada cola de prioridad se le asigna un quantum único dado por parámetro. Existe una cola implícita, que es la de mayor prioridad, con un quantum de 1. Cada cola adicional que se agrega tiene el quantum pasado por parámetro pero una prioridad menor. El scheduler siempre busca nuevas tareas en las colas de mayor prioridad. Si no encuentra una tarea en dicha cola, pasa a la siguiente.  Al bloquearse una tarea, la misma se remueve del scheduler y luego se reincorpora agregándose a una cola de tareas con un nivel de prioridad mayor. Tener una prioridad mayor no necesariamente implica tener un quantum mayor asignado, solo que se la ejecutara primero.
-
-\pagebreak
 
 \subsection{Código}
 
@@ -108,6 +109,7 @@ SchedNoMistery::SchedNoMistery(vector<int> argn) {
 }
 \end{lstlisting}
 
+El constructor se encarga de guardar los quantums recibidos por parametro y a su vez tambien el vector de colas.
 
 \subsubsection{Load y Unblock}
 \begin{lstlisting}[language=C++, breaklines=true]
@@ -115,9 +117,7 @@ void SchedNoMistery::load(int pid) {
 	q.at(0).push(pid);
 	tasks++;
 }
-\end{lstlisting}
 
-\begin{lstlisting}[language=C++, breaklines=true]
 void SchedNoMistery::unblock(int pid) {
 	q.at(max(0,blockedQueue[pid]-1)).push(pid);
 	blockedQueue.erase(pid);
@@ -177,35 +177,69 @@ int SchedNoMistery::next_pid() {
 
 \end{lstlisting}
 
+El Mystery Scheduler es un scheduler con Round Robin y múltiples colas de prioridad. A cada cola de prioridad se le asigna un quantum único dado por parámetro. Existe una cola implícita, que es la de mayor prioridad, con un quantum de 1. Cada cola adicional que se agrega tiene el quantum pasado por parámetro pero una prioridad menor. El scheduler siempre busca nuevas tareas en las colas de mayor prioridad. Si no encuentra una tarea en dicha cola, pasa a la siguiente.  Al bloquearse una tarea, la misma se remueve del scheduler y luego se reincorpora agregándose a una cola de tareas con un nivel de prioridad mayor. Tener una prioridad mayor no necesariamente implica tener un quantum mayor asignado, solo que se la ejecutara primero.
+
+\subsection{Comparacion}
+
+Para testear la implementacion decidimos probar con los lotes de tareas vistos en el analisis. Los resultados obtenidos fueron los siguientes.
+
 \pagebreak
 
-\textbf{BORRAR LO SIGUIENTE?}
+Primer lote:
 
-\subsection{Diagramas y analisis del scheduler}
-Para poder analizar el comportamiento del scheduler, decidimos armar el siguiente lote de tareas:
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{images/mist.png}
+    \label{fig:Task Consola}
+    \caption{Primera prueba}
+\end{figure}
 
-\begin{lstlisting}
-	*3 TaskCPU 10
-@4
-*3 TaskCPU 5
+Segundo lote:
 
-TaskConsola 2 1 4
-TaskConsola 5 1 1
-TaskConsola 10 1 2
-*3 TaskCPU 10
-@20:
-TaskCPU 10
-\end{lstlisting}
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{images/mist.png}
+    \label{fig:Task Consola}
+    \caption{Segunda prueba}
+\end{figure}
 
-De este gráfico podemos inferir lo siguiente:
+Tercer lote:
 
-\begin{itemize}
-	\item El scheduler es un round robin con algunas particularidades
-	\item Al incoporarse una nueva tarea, se la coloca en el tope de la cola del scheduler.
-\end{itemize}
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{images/mist.png}
+    \label{fig:Task Consola}
+    \caption{Tercera prueba}
+\end{figure}
 
-Este ultimo punto es importante, si dos tareas se incoporan durante la ejecucion de otra tarea, primero concluye el quantum de la tarea actual y se procede a cambiar la tarea con la primera que llego. Es por esta razon que elegimos implementar el scheduler sobre una lista, ya que nos permite agregar los elementos en las posiciones que precisamos.
+Como podemos apreciar, nuestra implementacion del scheduler se comporta de exactamente igual que la de la catedra.
 
-Otra cosa que determinamos mediante experimentacion, es que el scheduler toma una cantidad arbitraria de parametros. Despues de varias pruebas, pudimos determinar el comportamiento del scheduler respecto a los parametros. Si tomamos los parametros \texttt{5 4 3 2 1}, todas las tareas van a ejecutarse por primera vez con un quantum de un ciclo (esto es independiente de los parametros). Posteriormente el scheduler toma los valores del quantum a partir de los parametros del scheduler de forma ordenada y ciclica, es decir, el quantum de una tarea seria \texttt{1}, \texttt{5}, \texttt{4}, \texttt{3} ,\texttt{2}, \texttt{1}, \texttt{5}, \texttt{4} y asi sucesivamente hasta que concluye la ejecucion de la tarea.
-
-Por ultimo, esta el analisis como responde el scheduler ante las llamadas bloqueantes. Si una tarea tiene una llamada bloqueante se procede a desalojarla hasta que la misma se resuelve, una vez que se resuelve se procede a agregarla nuevamente a la lista con un quantum de un ciclo. Esto ocurre independientemente de los parametros que recibe el scheduler.
+%\pagebreak
+%
+%\textbf{BORRAR LO SIGUIENTE?}
+%
+%\subsection{Diagramas y analisis del scheduler}
+%Para poder analizar el comportamiento del scheduler, decidimos armar el siguiente lote de tareas:
+%
+%\begin{lstlisting}
+	%*3 TaskCPU 10
+%@4
+%*3 TaskCPU 5
+%
+%TaskConsola 2 1 4
+%TaskConsola 5 1 1
+%TaskConsola 10 1 2
+%*3 TaskCPU 10
+%@20:
+%TaskCPU 10
+%\end{lstlisting}
+%
+%De este gráfico podemos inferir lo siguiente:
+%
+%\begin{itemize}
+	%\item El scheduler es un round robin con algunas particularidades
+	%\item Al incoporarse una nueva tarea, se la coloca en el tope de la cola del scheduler.
+%\end{itemize}
+%
+%Este ultimo punto es importante, si dos tareas se incoporan durante la ejecucion de otra tarea, primero concluye el quantum de la tarea actual y se procede a cambiar la tarea con la primera que llego. Es por esta razon que elegimos implementar el scheduler sobre una lista, ya que nos permite agregar los elementos en las posiciones que precisamos.
+%
+%Otra cosa que determinamos mediante experimentacion, es que el scheduler toma una cantidad arbitraria de parametros. Despues de varias pruebas, pudimos determinar el comportamiento del scheduler respecto a los parametros. Si tomamos los parametros \texttt{5 4 3 2 1}, todas las tareas van a ejecutarse por primera vez con un quantum de un ciclo (esto es independiente de los parametros). Posteriormente el scheduler toma los valores del quantum a partir de los parametros del scheduler de forma ordenada y ciclica, es decir, el quantum de una tarea seria \texttt{1}, \texttt{5}, \texttt{4}, \texttt{3} ,\texttt{2}, \texttt{1}, \texttt{5}, \texttt{4} y asi sucesivamente hasta que concluye la ejecucion de la tarea.
+%
+%Por ultimo, esta el analisis como responde el scheduler ante las llamadas bloqueantes. Si una tarea tiene una llamada bloqueante se procede a desalojarla hasta que la misma se resuelve, una vez que se resuelve se procede a agregarla nuevamente a la lista con un quantum de un ciclo. Esto ocurre independientemente de los parametros que recibe el scheduler.
