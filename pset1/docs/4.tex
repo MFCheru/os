@@ -103,18 +103,18 @@ int SchedRR::tick(int cpu, const enum Motivo m) {
 \end{lstlisting}
 
 Como podemos apreciar, primero se considera si la tarea actual ejecutandose en la CPU termino u ocurrio un bloqueo, en ambos casos se la desaloja y se la cambia por la siguiente tarea en la cola, resetando el quantum en el proceso. Si el procesador se encuantra ejecutando la tarea IDLE y hay tareas esperando a ser ejecutadas, se procede a ejecutar la primera que este en la cola y se resetea el quantum para la CPU. Si no se presentan ninguno de los dos casos anteriores, el scheduler chequea el quantum actual, si aun no termino se mantiene la tarea actual y se concluye el $tick$. En el caso que haya terminado el quantum se chequea la cola de tareas, si no hay tareas en espera se resetea el quantum, en el caso contrario se efectua el cambio de tarea con la primer tarea de la cola tambien reseteando el quantum.
-
+\\
 Para verificar la correcta implementacion de los mecanismos de $Round Robin$, tenemos la siguiente configuracion del scheduler:
 
 \begin{enumerate}
 	\item lote\_tsk: 2.tsk
 	\item num\_cores: 2
-	\item switch\_cost: 1
+	\item switch\_cost: 2
 	\item sched\_class: SchedRR
 	\item params: 5 10
 \end{enumerate}
 
-Esta configuracion fue ejecutada con las siguientes tareas:
+Esta configuracion fue usada durante el procesamiento del lote 4, que compone las siguientes tareas:
 
 \begin{itemize}
 	\item Tarea 0: 40 ciclos de CPU, 0 llamadas bloqueantes
@@ -131,6 +131,9 @@ El resultado obtenido fue el siguiente:
     \caption{Task Batch}
 \end{figure}
 
-Como podemos apreciar, cada una de las CPU tiene su propio quantum. Las tareas se ejecutan durante el quantum, luego son desalojadas y se procede a la siguiente tarea en la cola. Por ultimo, podemos ver que el comportamiento en los bloqueos es adecuado, cuando una tarea se bloquea esta es desalojada y se procede a buscar la proxima tarea.
+Como podemos apreciar en el grafico, cada uno de los \textit{Cores} tiene su propio quantum (5 y 10), por lo que el Round-Robin conmuta las tareas con distinta frecuencia según de que \textit{Core} se trate, no obstante la cola de espera (del estado \textit{ready}) es única, independientemente de la cantidad de \textit{Cores} (ambos tienen la misma cola). Debido a estas condiciones, dos tareas de tipo \textit{taskCPU} son ejecutadas al mismo tiempo (una en cada \textit{Core}), pero una es desalojada antes que la otra, suscitando a una operación de \textit{pop} en la cola y poniendo a la siguiente tarea en estado \textit{runing} bajo el \textit{Core} recien liberado. Esto deja al otro \textit{Core} ejecutando aún la misma tarea, y asignandole otra luego de un tiempo mayor de demora. Luego a este último \textit{Core} se le asigna la tarea 0 (antes ejecutada por el otro), dejandole al otro \textit{Core} la tarea numero 3 (aún no ejecutada) encolada oportunamente para la siguiente conmutación. Siguiendo el curso del grafico, la tarea numero 3, al ser de tipo \textit{TaskBatch}, tras realizar alguna llamada bloqueante es desalojada y conmutada con otra tarea en estado \textit{ready}, aún cuando su \textit{quantum} no haya sido consumido. Bajo estos principios el lote sigue ejecutandose hasta que no queden mas tareas, tras lo que pasa al estado \textit{runing} la tarea \textit{IDLE}.
+
+Vale aclarar que en el caso de que alguna tarea actualmente ejecutandose consuma su \textit{quantum} y no haya alguna otra en estado \textit{ready}, la actual sigue en estado \textit{runing} hasta ese entonces (o hasta que dicha tarea finalice). 
+
 
 
