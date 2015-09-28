@@ -40,12 +40,12 @@ ejercicio2:
 ejercicio3:
 	make
 	mkdir -p ejercicio3
-	./simusched tasks/3.tsk 1 1 0 SchedFCFS | python graphsched.py > ejercicio3/3.png && eog ejercicio3/3.png &
+	./simusched tasks/3.tsk 1 4 0 SchedFCFS | python graphsched.py > ejercicio3/3.png && eog ejercicio3/3.png &
 
 ejercicio4:
 	make
 	mkdir -p ejercicio4
-	./simusched tasks/4.tsk 2 0 0 SchedRR 5 10 | python graphsched.py > ejercicio4/4.png && eog ejercicio4/4.png &
+	./simusched tasks/4.tsk 2 3 0 SchedRR 5 10 | python graphsched.py > ejercicio4/4.png && eog ejercicio4/4.png &
 
 ejercicio5:
 	make
@@ -71,10 +71,14 @@ ejercicio7:
 	./simusched tasks/mistery.tsk 1 0 0 SchedNoMistery 5 6 7 8 9 10 | python graphsched.py > ejercicio7/no_mist.png && eog ejercicio7/no_mist.png &
 	./simusched tasks/mistery2.tsk 1 0 0 SchedMistery 5 6 7 8 9 10 | python graphsched.py > ejercicio7/mist2.png && eog ejercicio7/mist2.png &
 	./simusched tasks/mistery2.tsk 1 0 0 SchedNoMistery 5 6 7 8 9 10 | python graphsched.py > ejercicio7/no_mist2.png && eog ejercicio7/no_mist2.png &
+	./simusched tasks/mistery3.tsk 1 0 0 SchedMistery 5 6 7 8 9 10 | python graphsched.py > ejercicio7/mist3.png && eog ejercicio7/mist3.png &
+	./simusched tasks/mistery3.tsk 1 0 0 SchedNoMistery 5 6 7 8 9 10 | python graphsched.py > ejercicio7/no_mist3.png && eog ejercicio7/no_mist3.png &
 
 ejercicio8:
 	make
 	mkdir -p ejercicio8
 	./simusched tasks/8.tsk 2 2 0 SchedRR2 20 40 | python graphsched.py > ejercicio8/8_quantumRR2.png && eog ejercicio8/8_quantumRR2.png &
 	./simusched tasks/8.tsk 2 2 0 SchedRR 20 40 | python graphsched.py > ejercicio8/8_quantumRR.png && eog ejercicio8/8_quantumRR.png &
+	./simusched tasks/8a.tsk 2 2 0 SchedRR2 20 40 | python graphsched.py > ejercicio8/8a_quantumRR2.png && eog ejercicio8/8a_quantumRR2.png &
+	./simusched tasks/8a.tsk 2 2 0 SchedRR 20 40 | python graphsched.py > ejercicio8/8a_quantumRR.png && eog ejercicio8/8a_quantumRR.png &
 
