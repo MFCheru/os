@@ -45,7 +45,7 @@ ejercicio3:
 ejercicio4:
 	make
 	mkdir -p ejercicio4
-	./simusched tasks/4.tsk 2 3 0 SchedRR 5 10 | python graphsched.py > ejercicio4/4.png && eog ejercicio4/4.png &
+	./simusched tasks/4.tsk 2 2 0 SchedRR 5 10 | python graphsched.py > ejercicio4/4.png && eog ejercicio4/4.png &
 
 ejercicio5:
 	make

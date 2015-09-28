@@ -1,0 +1,9 @@
+TaskCPU 100
+TaskCPU 50
+TaskCPU 100
+TaskCPU 50
+TaskBatch 100 5
+@100:
+TaskCPU 100
+@300:
+TaskCPU 100
