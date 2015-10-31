@@ -1,0 +1,72 @@
+\section{Read-Write Lock}
+
+\subsection{Implementacion}
+\begin{lstlisting}[language=C++, breaklines=true]
+class RWLock {
+    public:
+        RWLock();
+        void rlock();
+        void wlock();
+        void runlock();
+        void wunlock();
+
+    private:
+	    pthread_mutex_t lock_mutex;
+	    pthread_cond_t condition;	
+	    bool writer;
+	    unsigned int readers;
+
+};
+
+RWLock :: RWLock() {
+
+	pthread_mutex_init(&(this->lock_mutex), NULL);
+	pthread_cond_init (&(this->condition), NULL);
+	writer = false;
+	readers = 0;
+}
+
+void RWLock :: rlock() {
+
+	pthread_mutex_lock(&(this->lock_mutex));
+
+	while (writer) 
+		pthread_cond_wait(&(this->condition), &(this->lock_mutex));
+	readers++;
+	
+	pthread_mutex_unlock(&(this->lock_mutex));
+}
+
+void RWLock :: wlock() {
+
+	pthread_mutex_lock(&(this->lock_mutex));
+	
+	while (writer)
+		pthread_cond_wait(&(this->condition), &(this->lock_mutex));
+
+	writer = true;
+
+	while (readers > 0) 
+		pthread_cond_wait(&(this->condition), &(this->lock_mutex));
+	
+	
+	pthread_mutex_unlock(&(this->lock_mutex));
+}
+
+void RWLock :: runlock() {
+
+	pthread_mutex_lock(&(this->lock_mutex));
+	
+	readers--;
+	if (readers == 0)
+		pthread_cond_signal(&(this->condition));
+	
+	pthread_mutex_unlock(&(this->lock_mutex));
+}
+
+void RWLock :: wunlock() {
+
+	writer = false;
+	pthread_cond_signal(&(this->condition));
+}
+\end{lstlisting}

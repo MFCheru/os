@@ -1,0 +1,85 @@
+\section{Backend multijugador}
+
+\subsection{Loop de conexiones entrantes}
+
+\begin{lstlisting}[language=C++, breaklines=true]
+// aceptar conexiones entrantes.
+socket_size = sizeof(remoto);
+int cant_users_act = 0;
+pthread_t threads[CANT_USERS];
+int socketfd_cliente[CANT_USERS];
+
+while (true) {
+	if(cant_users_act < CANT_USERS) {
+		if ((socketfd_cliente[cant_users_act] = accept(socket_servidor, (struct sockaddr*) &remoto, (socklen_t*) &socket_size)) == -1)
+			cerr << "Error al aceptar conexion" << endl;
+		else {
+			pthread_create(&threads[cant_users_act], NULL, atendedor_wrapper, &socketfd_cliente[cant_users_act]);
+			cant_users_act++;
+		}
+	}
+}
+\end{lstlisting}
+
+\subsection{Loop de jugador}
+
+\begin{lstlisting}[language=C++, breaklines=true]
+while (true) {
+	// espera una letra o una confirmacion de palabra
+  char mensaje[MENSAJE_MAXIMO+1];
+  int comando = recibir_comando(socket_fd, mensaje);
+  if (comando == MSG_LETRA) {
+		Casillero ficha;
+		if (parsear_casillero(mensaje, ficha) != 0) {
+			// no es un mensaje LETRA bien formado, hacer de cuenta que nunca llego
+			continue;
+		}
+		// ficha contiene la nueva letra a colocar
+		// verificar si es una posicion valida del tablero
+		lock_juego.wlock();
+		if (es_ficha_valida_en_palabra(ficha, palabra_actual)) {
+			palabra_actual.push_back(ficha);
+			tablero_letras[ficha.fila][ficha.columna] = ficha.letra;
+      // OK
+      if (enviar_ok(socket_fd) != 0) {
+				// se produjo un error al enviar. Cerramos todo.
+        terminar_servidor_de_jugador(socket_fd, palabra_actual);
+			}
+		} else {
+			quitar_letras(palabra_actual);
+      // ERROR
+      if (enviar_error(socket_fd) != 0) {
+				// se produjo un error al enviar. Cerramos todo.
+        terminar_servidor_de_jugador(socket_fd, palabra_actual);
+			}
+		}
+		lock_juego.wunlock();
+	} else if (comando == MSG_PALABRA) {
+		// las letras acumuladas conforman una palabra completa, escribirlas en el tablero de palabras y borrar las letras temporales
+    lock_juego.wlock();
+    for (list<Casillero>::const_iterator casillero = palabra_actual.begin(); casillero != palabra_actual.end(); casillero++) {
+			tablero_palabras[casillero->fila][casillero->columna] = casillero->letra;
+		}
+		palabra_actual.clear();
+
+    if (enviar_ok(socket_fd) != 0) {
+			// se produjo un error al enviar. Cerramos todo.
+      terminar_servidor_de_jugador(socket_fd, palabra_actual);
+		}
+		lock_juego.wunlock();
+	} else if (comando == MSG_UPDATE) {
+		lock_juego.rlock();
+		if (enviar_tablero(socket_fd) != 0) {
+			// se produjo un error al enviar. Cerramos todo.
+			terminar_servidor_de_jugador(socket_fd, palabra_actual);
+		}
+		lock_juego.runlock();
+	} else if (comando == MSG_INVALID) {
+		// no es un mensaje valido, hacer de cuenta que nunca llego
+    continue;
+	} else {
+		// se produjo un error al recibir. Cerramos todo.
+		terminar_servidor_de_jugador(socket_fd, palabra_actual);
+	}
+}
+\end{lstlisting}
