@@ -24,10 +24,10 @@ bool cargar_int(const char* numero, unsigned int& n) {
     return true;
 }
 
-void *atendedor_wrapper(void *socketfd) {
-    atendedor_de_jugador(*((int *)socketfd));
-    return NULL;
-}
+//void *atendedor_wrapper(void *socketfd) {
+//    atendedor_de_jugador(*((int *)socketfd));
+//    return NULL;
+//}
 
 int main(int argc, const char* argv[]) {
     // manejo la señal SIGINT para poder cerrar el socket cuando cierra el programa
@@ -98,10 +98,8 @@ int main(int argc, const char* argv[]) {
             if ((socketfd_cliente[cant_users_act] = accept(socket_servidor, (struct sockaddr*) &remoto, (socklen_t*) &socket_size)) == -1)
                 cerr << "Error al aceptar conexion" << endl;
             else {
-                pthread_create(&threads[cant_users_act], NULL, atendedor_wrapper, &socketfd_cliente[cant_users_act]);
+                pthread_create(&threads[cant_users_act], NULL, atendedor_de_jugador, &socketfd_cliente[cant_users_act]);
                 cant_users_act++;
-                //close(socket_servidor);
-                //atendedor_de_jugador(socketfd_cliente[cant_users-1]);
             }
         }
     }
@@ -109,7 +107,8 @@ int main(int argc, const char* argv[]) {
     return 0;
 }
 
-void atendedor_de_jugador(int socket_fd) {
+void *atendedor_de_jugador(void *socket_fd_ptr) {
+    int socket_fd = *((int *)socket_fd_ptr);
     // variables locales del jugador
     char nombre_jugador[21];
     list<Casillero> palabra_actual; // lista de letras de la palabra aún no confirmada
@@ -189,6 +188,7 @@ void atendedor_de_jugador(int socket_fd) {
             terminar_servidor_de_jugador(socket_fd, palabra_actual);
         }
     }
+    return NULL;
 }
 
 

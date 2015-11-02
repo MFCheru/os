@@ -14,12 +14,16 @@ while (true) {
 		if ((socketfd_cliente[cant_users_act] = accept(socket_servidor, (struct sockaddr*) &remoto, (socklen_t*) &socket_size)) == -1)
 			cerr << "Error al aceptar conexion" << endl;
 		else {
-			pthread_create(&threads[cant_users_act], NULL, atendedor_wrapper, &socketfd_cliente[cant_users_act]);
+			pthread_create(&threads[cant_users_act], NULL, atendedor_de_jugador, &socketfd_cliente[cant_users_act]);
 			cant_users_act++;
 		}
 	}
 }
 \end{lstlisting}
+
+En este caso se tomo el codigo original y se lo modifico para que pueda recibir multiples conexiones por el mismo socket, para lograr esto se utilizo $threading$ mediante el uso de la libreria $pthreads$. La idea de usar $threads$ es poder tener varios hilos de ejecucion bajo el mismo marco de un proceso, compratiendo recursos entre ellos, en este caso tenemos el mismo tablero en memoria para varios jugadores haciendolo un caso ideal para utilizar $threading$.
+
+Para crear cada uno de los hilos de ejecucion, primero se establecio la cantidad de maxima de usuarios que pueden estar conectados simultaneamente mediante la constante \texttt{CANT\_USERS}, esto se hizo de esta forma para poder mantener un arreglo de $threads$ y otro para guardar el $socket$ por cada hilo de ejecucion, lo cual nos permite a la hora de crear un $thread$ no entrar en conflictos por las posiciones de memoria, ya que todos serian independientes y no perderiamos ningun $socket$. Para poder indexar estos arreglo se utilizo una variable llamada \texttt{cant\_users\_act} incializada en \texttt{0}, la cual es aumentada luego de cada llamado a la funcion \texttt{pthread\_create}.
 
 \subsection{Loop de jugador}
 
@@ -83,3 +87,12 @@ while (true) {
 	}
 }
 \end{lstlisting}
+
+En lo que respecta al loop de atencion de jugador, no hubo cambios muy significativos, el mas importante de ellos fue la adicion de un $RWLock$ (\texttt{lock\_juego}) para poder controlar la concurrencia de manera correcta. Debido a que cada jugador corre en un $thread$ individual, hay que tener en cuenta los casos de concurrencia que se pueden dar sobre el tablero, los comandos que fueron modificados son los siguientes:
+
+\begin{itemize}
+	\item \texttt{MSG\_LETRA} y \texttt{MSG\_PALABRA}: Se agrego un lock de escritura en ambos, ya que estos dos comandos modifican variables globales del juego
+	\item \texttt{MSG\_UPDATE}: Se agrego un lock de lectura, ya que este comando realiza una lectura sobre la variable del tablero para poder actualizar el contenido del $frontend$
+\end{itemize}
+
+Con estas modificaciones es posible ejecutar el juego de manera correcta en un entorno multijugador.
