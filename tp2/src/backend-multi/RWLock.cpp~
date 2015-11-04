@@ -49,7 +49,7 @@ void RWLock :: runlock() {
 	
 	readers--;
 	if (readers == 0)
-		pthread_cond_signal(&(this->condition));
+		pthread_cond_broadcast(&(this->condition));
 	
 	pthread_mutex_unlock(&(this->lock_mutex));
 }
@@ -57,8 +57,5 @@ void RWLock :: runlock() {
 void RWLock :: wunlock() {
 
 	writer = false;
-	pthread_cond_signal(&(this->condition));
-
-    /* Cambiar por su implementación */
-    //pthread_rwlock_unlock(&(this->rwlock));
+	pthread_cond_broadcast(&(this->condition));
 }

@@ -11,6 +11,7 @@ Condición. */
 RWLock :: RWLock() {
 
 	pthread_mutex_init(&(this->lock_mutex), NULL);
+	pthread_mutex_init(&(this->lock_writer), NULL);
 	pthread_cond_init (&(this->condition), NULL);
 	writer = false;
 	readers = 0;
@@ -34,7 +35,9 @@ void RWLock :: wlock() {
 	while (writer)
 		pthread_cond_wait(&(this->condition), &(this->lock_mutex));
 
+	pthread_mutex_lock(&(this->lock_writer));
 	writer = true;
+	pthread_mutex_unlock(&(this->lock_writer));
 
 	while (readers > 0) 
 		pthread_cond_wait(&(this->condition), &(this->lock_mutex));
@@ -49,13 +52,16 @@ void RWLock :: runlock() {
 	
 	readers--;
 	if (readers == 0)
-		pthread_cond_signal(&(this->condition));
+		pthread_cond_broadcast(&(this->condition));
 	
 	pthread_mutex_unlock(&(this->lock_mutex));
 }
 
 void RWLock :: wunlock() {
 
+	pthread_mutex_lock(&(this->lock_writer));
 	writer = false;
-	pthread_cond_signal(&(this->condition));
+	pthread_mutex_unlock(&(this->lock_writer));
+
+	pthread_cond_broadcast(&(this->condition));
 }

@@ -12,6 +12,7 @@ class RWLock {
 
     private:
 	    pthread_mutex_t lock_mutex;
+        pthread_mutex_t lock_writer;
 	    pthread_cond_t condition;	
 	    bool writer;
 	    unsigned int readers;
