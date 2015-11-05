@@ -1,0 +1,37 @@
+	rk0   s0        Enviando mensaje inicial con parámetros          
+	rk0   s0        Enviando mensaje inicial con parámetros          
+	rk1   c0   a    	¡Buenas! Recibí mensaje inicial con parámetros
+	rk1   c0   a    	   1 iters      200ms prev.      100ms crit.
+	rk1   c0   a    	Computando de todo un poco ...                   
+	rk3   c1   b    	¡Buenas! Recibí mensaje inicial con parámetros
+	rk3   c1   b    	   2 iters      400ms prev.      200ms crit.
+	rk3   c1   b    	Computando de todo un poco ...                   
+	rk0   s0        Enviando mensaje inicial con parámetros          
+	rk5   c2   c    	¡Buenas! Recibí mensaje inicial con parámetros
+	rk5   c2   c    	   3 iters      600ms prev.      300ms crit.
+	rk5   c2   c    	Computando de todo un poco ...                   
+	rk0   s0        Mi cliente solicita acceso exclusivo              
+	rk0   s0        Enviando requests                                 
+	rk1   c0   a    	¡Necesito mutex!                                
+	rk2   s1        Enviando ACK                                      
+	rk4   s2        Enviando ACK                                      
+	rk0   s0        Recibiendo ACK                                    
+	rk0   s0        Permiso obtenido                                  
+	rk0   s0        Dándole permiso (frutesco por ahora)             
+	rk1   c0   a    	Entrando en sección crítica                    
+	rk0   s0        Mi cliente libera su acceso exclusivo             
+	rk0   s0        Enviando respuesta diferida                       
+	rk0   s0        Mi cliente avisa que terminó                     
+	rk0   s0        Finalizando                                       
+	rk1   c0   a    	Avisandole a mi servidor que voy a terminar      
+	rk4   s2        Recibiendo ACK                                    
+	rk1   c0   a    Finalizando                                       
+	rk3   c1   b    	¡Necesito mutex!                                
+	rk2   s1        Mi cliente solicita acceso exclusivo              
+	rk2   s1        Enviando requests                                 
+	rk4   s2        Enviando ACK                                      
+	rk2   s1        Recibiendo ACK                                    
+	rk4   s2        Mi cliente solicita acceso exclusivo              
+	rk4   s2        Enviando requests                                 
+	rk5   c2   c    	¡Necesito mutex!                                
+	rk2   s1        Difiriendo respuesta                              
