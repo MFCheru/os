@@ -1,5 +1,70 @@
 \section{Read-Write Lock}
 
+Un \textit{Read-Write Lock} es una primitiva de sincronización diseñada con el fin de proveer bajo paralelismo estabilidad a las estructuras de datos, motivada especialmente por los efectos de la concurrencia.
+Su objetivo consiste en facilitar una serie de funciones que permitan coordinar efectivamente el uso compartido de ciertos datos, permitiendo paralelismo unicamente para la lectura, y otorgando un solo permiso de escritura; para ello cada \textit{thread} deberá invocar funciones de \textit{lock} y \textit{unlock} de lectura/escritura, que soliciten y liberen respectivamente el permiso de acceso.   
+A diferencia de otros mecanismos como el \textit{Spin Lock}, el \textit{Read-Write Lock} evita las situaciones de \textit{polling}, permitiendo que los \textit{thread} que permanezcan esperando el permiso de acceso, tras invocar un \textit{lock} se mantengan dormidos hasta que el \textit{thread} correspondiente libere dicho permiso. Por este motivo suele implementarse mediante \textit{mutexs} y \textit{variables de condición}.  
+
+\subsection{Variables de condición}
+  Las \textit{variables de condición} son primitivas de sincronización utilizadas en asociación a un mutex con el fin de sincronizar dos o mas \textit{threads} en función de un predicado. La idea es que al realizar un \textit{wait} bloqueante sobre la \textit{variable de condición} (asociando cierto \textit{mutex} en dicho proceso), automaticamente (y atomicamente) se libere el mutex asociado, de manera que otro \textit{thread} a la espera de dicho \textit{mutex} continue su ejecución hasta cumplir cierta condición y luego el mismo despertiete nuestra \textit{variable de condición} por medio de alguna operación (por ejemplo un \textit{signal} o un \textit{broadcast}); vale aclarar que a diferencia de los \textit{semaforos} clásicos, en este caso el efecto de estas últimas operaciones no es acumulativo, sino instantaneo. Tras esto, el \textit{mutex} se vuelve a bloquear y el/los \textit{thread} que hayan estado esperando a la \textit{variable de condición} se despiertan y continuan su ejecución. Es importante aclarar que mas de un \textit{thread} podría estar esperando a cierta \textit{variable de condición} pero esperando que se cumplan distintas condiciones, por lo que podrían llegar a despertarse indebidamente; a estos casos se los llama \textit{Spurious wakeups}, y por ello es recomendable chequear la condición no solo antes sino después del \textit{wait} a la \textit{variable de condición}, tras lo cual volveremos a bloquearnos en caso de detectar que no se cumpla nuestra condición o predicado.
+
+\subsection{Pseudo-código}
+
+Para implementar este mecanismo, hemos diseñado la clase "RWLock", en ella tendremos los siguientes atributos:
+\begin{itemize}
+ \item \textit{readers}, un entero sin signo que registra la cantidad de lectores actuales (que hayan tomado el permiso de lectura y todavia no lo hayan liberado).
+ \item \textit{writer}, un \textit{flag} que indica si alguien tomo el permiso de escritura.
+ \item \textit{condition} y \textit{lock\_mutex}, son la \textit{variable de condición} y su \textit{mutex} asociado.
+ \item \textit{lock\_writer}, un \textit{mutex} de seguridad, usado para preservar la estabilidad de la variable \textit{writer}. 
+ \item \textit{lock\_reader}, un \textit{mutex} de seguridad, usado para preservar la estabilidad de la variable \textit{reader}. 
+\end{itemize}
+
+Tendremos además un metodo para cada \textit{lock} y \textit{unlock} de lectura y escritura con el siguiente \textit{pseudo-código}:
+
+\begin{itemize}
+\item \textbf{rlock()}:
+	\begin{enumerate}
+	\item Espero a tomar el \textit{lock\_mutex}.
+	\item Mientras haya alguien escribiendo (es decir mientras este arriba el flag de 		\textit{writer}) me mantengo esperando a \textit{condition}.
+	\item Ya no hay nadie escribiendo, asi que puedo leer, espero a tomar el \textit{lock\_reader}
+	\item Me sumo a los lectores actuales incrementando la variable \textit{readers}.
+	\item Libero el \textit{lock\_reader}.
+	\item Libero el \textit{lock\_mutex}.
+	\end{enumerate}
+	
+\item \textbf{wlock()}:
+	\begin{enumerate}
+	\item Espero a tomar el \textit{lock\_mutex}.
+	\item Mientras haya alguien escribiendo (es decir mientras este arriba el flag de 		\textit{writer}) me mantengo esperando a \textit{condition}.
+	\item Tomo el \textit{lock\_writer}.
+	\item Indico que se esta escribiendo o se esta intentando escribir, levantando el \textit{flag} de \textit{writer}.
+	\item Libero el \textit{lock\_writer}.
+	\item Mientras haya alguien leyendo, es decir \textit{readers} sea mayor a 0, me mantengo esperando a \textit{condition}.
+	\item Libero el \textit{lock\_mutex}.
+	\end{enumerate}
+	
+\item \textbf{runock()}: 
+	\begin{enumerate}
+	\item Espero a tomar el \textit{lock\_mutex}.
+	\item Espero a tomar el \textit{lock\_reader}
+	\item Como ya no voy a leer decremento \textit{readers}.
+	\item Libero el \textit{lock\_reader}.
+	\item Si era el último lector (\textit{readers} vale cero), lo hago saber mediante un \textit{broadcast} sobre \textit{condition}.
+	\item Libero el \textit{lock\_mutex}.
+	\end{enumerate}
+	
+\item \textbf{wunlock()}:
+	\begin{enumerate}
+
+	\item Tomo el \textit{lock\_writer}.
+	\item Indico que ya no hay nadie escribiendo, levantando el \textit{flag} de \textit{writer}.
+	\item Libero el \textit{lock\_writer}.
+	\item Hago saber que ya no hay nadie escribiendo despertando a los que esperen a \textit{condition}, mediante un \textit{broadcast}.
+	\item Libero el \textit{lock\_mutex}.
+	\end{enumerate}
+
+\end{itemize}
+
+
 \subsection{Implementacion}
 \begin{lstlisting}[language=C++, breaklines=true]
 class RWLock {
@@ -12,6 +77,8 @@ class RWLock {
 
     private:
 	    pthread_mutex_t lock_mutex;
+        pthread_mutex_t lock_writer;
+	    pthread_mutex_t lock_reader;
 	    pthread_cond_t condition;	
 	    bool writer;
 	    unsigned int readers;
@@ -21,6 +88,8 @@ class RWLock {
 RWLock :: RWLock() {
 
 	pthread_mutex_init(&(this->lock_mutex), NULL);
+	pthread_mutex_init(&(this->lock_writer), NULL);
+	pthread_mutex_init(&(this->lock_reader), NULL);
 	pthread_cond_init (&(this->condition), NULL);
 	writer = false;
 	readers = 0;
@@ -32,7 +101,10 @@ void RWLock :: rlock() {
 
 	while (writer) 
 		pthread_cond_wait(&(this->condition), &(this->lock_mutex));
+		
+	pthread_mutex_lock(&(this->lock_reader));
 	readers++;
+	pthread_mutex_unlock(&(this->lock_reader));
 	
 	pthread_mutex_unlock(&(this->lock_mutex));
 }
@@ -44,7 +116,9 @@ void RWLock :: wlock() {
 	while (writer)
 		pthread_cond_wait(&(this->condition), &(this->lock_mutex));
 
+	pthread_mutex_lock(&(this->lock_writer));
 	writer = true;
+	pthread_mutex_unlock(&(this->lock_writer));
 
 	while (readers > 0) 
 		pthread_cond_wait(&(this->condition), &(this->lock_mutex));
@@ -57,7 +131,10 @@ void RWLock :: runlock() {
 
 	pthread_mutex_lock(&(this->lock_mutex));
 	
+	pthread_mutex_lock(&(this->lock_reader));
 	readers--;
+	pthread_mutex_unlock(&(this->lock_reader));
+	
 	if (readers == 0)
 		pthread_cond_signal(&(this->condition));
 	
@@ -66,7 +143,10 @@ void RWLock :: runlock() {
 
 void RWLock :: wunlock() {
 
+	pthread_mutex_lock(&(this->lock_writer));
 	writer = false;
+	pthread_mutex_unlock(&(this->lock_writer));
+	
 	pthread_cond_signal(&(this->condition));
 }
 \end{lstlisting}

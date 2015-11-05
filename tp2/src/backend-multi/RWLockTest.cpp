@@ -16,6 +16,7 @@ void *lector(void *p_minumero) {
     
     printf("LECTOR %d QUIERE LEER\n", minumero);
     lock.rlock();
+    printf("LECTOR %d LEYENDO\n", minumero);
     sleep(SLEEP_LECTORES);
     lock.runlock();
     printf("LECTOR %d HA LEIDO\n", minumero);
@@ -27,6 +28,7 @@ void *escritor(void *p_minumero) {
     
     printf("ESCRITOR %d QUIERE ESCRBIR\n", minumero);
     lock.wlock();
+    printf("ESCRITOR %d ESCRIBIENDO\n", minumero);
     sleep(SLEEP_ESCRITORES);
     lock.wunlock();
     printf("ESCRITOR %d HA ESCRITO\n", minumero);
